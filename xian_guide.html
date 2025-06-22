@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西安主要旅游景点深度游攻略</title>
+    
+    <!-- 引入技术规范中指定的外部资源 -->
+    <link href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-100-M/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+
+    <!-- 自定义样式，实现文化复古风格 -->
+    <style>
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: #FDFBF5; /* 仿古纸张颜色 */
+            color: #5a442a; /* 复古棕色文字 */
+        }
+        h1, h2, h3 {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 700;
+        }
+        .prose-custom p, .prose-custom li {
+             font-family: 'Noto Sans SC', sans-serif;
+             font-size: 1.05rem;
+             line-height: 1.8;
+        }
+        .audio-btn:hover {
+            color: #c89b4f; /* 复古金色悬停效果 */
+        }
+        /* 播放按钮动画 */
+        .fa-play, .fa-pause {
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- 主容器，使用Alpine.js管理状态 -->
+    <div x-data="tourGuide()" class="max-w-3xl mx-auto p-4 md:p-8">
+
+        <!-- 页面主标题和介绍 -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-[#3D2C1B]">西安主要旅游景点深度游攻略</h1>
+            <p class="text-lg md:text-xl text-center mx-auto max-w-2xl">
+                欢迎来到十三朝古都——西安。这座城市的一砖一瓦都沉淀着历史的厚重，一街一巷都充满了传奇故事。为了让您更好地领略古都的魅力，我们精心整理了这份主要旅游景点的深度介绍，希望能为您的旅程增添一抹亮色。
+            </p>
+        </header>
+        
+        <!-- 使用template循环渲染每个景区分类 -->
+        <template x-for="(category, catIndex) in attractionsData" :key="catIndex">
+            <section class="mb-10">
+                <!-- 景区分类标题 -->
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 pb-2 border-b-2 border-[#D4C4A3]" x-text="category.name"></h2>
+                
+                <!-- 循环渲染该分类下的每个景点 -->
+                <div class="space-y-2">
+                    <template x-for="(attraction, index) in category.attractions" :key="index">
+                        <div class="border border-[#EAE0C8] rounded-lg shadow-sm overflow-hidden transition-all duration-300">
+                            <!-- 景点标题和音频播放按钮 -->
+                            <div class="p-4 flex justify-between items-center cursor-pointer bg-[#F9F5EC] hover:bg-[#F5EFE2]" @click="toggleAccordion(attraction.id)">
+                                <h3 class="text-xl font-semibold" x-text="attraction.title"></h3>
+                                <!-- 自定义音频播放控件 -->
+                                <button v-if="attraction.audioUrl" @click.stop="playAudio(attraction.id)" class="audio-btn text-2xl w-10 h-10 flex items-center justify-center text-[#8C6D46]">
+                                    <i class="fas" :class="{'fa-play': playingId !== attraction.id, 'fa-pause': playingId === attraction.id}"></i>
+                                </button>
+                                <!-- 音频元素，通过x-ref引用 -->
+                                <audio :src="attraction.audioUrl" :x-ref="'audio-' + attraction.id" @ended="playingId = null"></audio>
+                            </div>
+
+                            <!-- 展开的详细介绍内容 -->
+                            <div x-show="openId === attraction.id" x-collapse>
+                                <div class="p-6 border-t border-[#EAE0C8] prose-custom">
+                                    <p class="mb-4" x-text="attraction.description"></p>
+                                    
+                                    <h4 class="font-semibold text-lg mb-2">看点聚焦：</h4>
+                                    <ul class="list-disc list-inside space-y-2 mb-4">
+                                        <template x-for="highlight in attraction.highlights" :key="highlight">
+                                            <li x-text="highlight"></li>
+                                        </template>
+                                    </ul>
+
+                                    <h4 class="font-semibold text-lg mb-2">游玩建议：</h4>
+                                    <p x-text="attraction.advice"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </section>
+        </template>
+        
+        <footer class="text-center mt-16 text-sm text-[#a18a6c]">
+            <p>祝您旅途愉快，满载而归！</p>
+        </footer>
+
+    </div>
+
+    <!-- Alpine.js 逻辑 -->
+    <script>
+        function tourGuide() {
+            return {
+                // 正在播放的音频ID
+                playingId: null,
+                // 当前展开的景点ID
+                openId: null,
+                
+                // 存储从Markdown解析出的所有景点数据
+                attractionsData: [
+                    {
+                        name: "一、 梦回大唐，帝王遗风",
+                        attractions: [
+                            {
+                                id: 'daminggong',
+                                title: "大明宫国家遗址公园：丝绸之路的东方圣殿",
+                                audioUrl: null, // 音频生成失败
+                                description: "想象一下，站在唐朝的政治中心和国家象征——大明宫的遗址之上，是一种怎样的体验？这里曾是世界上规模最宏大、最辉煌的宫殿群，是盛唐气象的缩影。",
+                                highlights: [
+                                    "丹凤门：作为大明宫的正南门，其雄伟壮阔的遗址足以让您想象当年\"万国来朝\"的盛景。",
+                                    "含元殿遗址：这里曾是举行国家大典的地方，站在宽阔的台基之上，闭上眼，仿佛还能听到历史的回响。",
+                                    "微缩景观：园内的微缩景观艺术化地再现了大明宫当年的全貌，是拍照打卡、了解宫殿布局的绝佳之处。",
+                                    "考古探索中心：如果您对考古感兴趣，这里的互动体验和文物展示将为您揭开大明宫的神秘面纱。"
+                                ],
+                                advice: "公园面积广阔，建议乘坐电瓶车游览，节省体力的同时也能更好地规划路线。这里不仅是历史爱好者的天堂，也是一个适合散步、放风筝的城市绿肺。"
+                            },
+                            {
+                                id: 'chenqiang',
+                                title: "西安城墙：骑行在历史的天际线上",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142531-vicyaxvB.mp3?Expires=86401750573531&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=vnoSdjAXrECMS8PHfhXUyXOLhyA%3D",
+                                description: "西安城墙，这座当今世界上保存最完整、规模最宏大的古代城垣，是西安的\"城市名片\"。它像一条巨龙，盘踞在城市的中心，守护着千年的安宁与繁华。",
+                                highlights: [
+                                    "骑行体验：在城墙上租一辆自行车，迎着微风，伴着古乐，悠然骑行一周（约14公里），是体验城墙魅力的最佳方式。",
+                                    "城门楼：永宁门（南门）是游客最常登临的城门，也是夜景最美的地方。此外，长乐门（东门）、安定门（西门）、安远门（北门）也各有其历史韵味。",
+                                    "角楼与敌楼：这些古代的军事防御设施，如今已成为摄影爱好者们的宠儿，不同的角度能拍出不同的大片感。"
+                                ],
+                                advice: "推荐在傍晚时分登城，既可欣赏日落余晖洒满古城的温柔，又能感受华灯初上时城墙的璀璨。南门区域的夜间常有仿古入城仪式表演，值得一看。"
+                            },
+                            {
+                                id: 'datangbuyecheng',
+                                title: "大唐不夜城：穿越到盛唐的奇幻长街",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142540-xJDJTMKO.mp3?Expires=86401750573540&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=VAlcbg2VWsY4YSJcbsRPGeYgVH0%3D",
+                                description: "这不仅是一条步行街，更是一个以盛唐文化为背景的沉浸式体验空间。当夜幕降临，华灯齐放，这里便化身为流光溢彩、如梦如幻的\"不夜长安\"。",
+                                highlights: [
+                                    "主题雕塑：从\"贞观之治\"到\"开元盛世\"，街区的雕塑群讲述着大唐的辉煌历史和风云人物。",
+                                    "行为艺术：\"石头哥\"、\"不倒翁小姐姐\"等网红行为艺术表演，让您仿佛与唐朝人擦肩而过。",
+                                    "璀璨夜景：整条街的仿唐建筑在灯光映衬下显得格外辉煌，是西安夜景的精华所在。",
+                                    "文艺演出：街区内有多个舞台，定时上演各种仿唐歌舞、音乐表演，将盛唐的乐舞文化生动再现。"
+                                ],
+                                advice: "这里是\"越夜越美丽\"的典型代表，建议晚上前来。同时，由于游客众多，请注意保管好个人财物。"
+                            }
+                        ]
+                    },
+                    {
+                        name: "二、 古城印记，市井烟火",
+                        attractions: [
+                           {
+                                id: 'zhonglou',
+                                title: "西安钟楼：古城中心的绝对C位",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142549-KoglkGGx.mp3?Expires=86401750573549&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=Bn2vEi%2FGXktYSjaN4e6k2CcxDzI%3D",
+                                description: "矗立于西安市中心，东西南北四条大街的交汇处，西安钟楼以其雄伟的身姿和独特的历史地位，成为古城的标志性建筑。",
+                                highlights: [
+                                    "建筑之美：钟楼为砖木结构，重檐三滴水，四角攒尖顶，无论是整体造型还是细节处的彩绘斗拱，都体现了明代建筑的最高技艺。",
+                                    "登楼远眺：登上钟楼，可以360度俯瞰西安的城市中心，感受车水马龙与古老建筑的奇妙交融。",
+                                    "文物陈列：楼内收藏有景云钟（复制品）和各种历史碑刻，诉说着它作为古代报时中心的历史。"
+                                ],
+                                advice: "钟楼和鼓楼相距不远，可以购买联票一同参观。夜晚的钟楼在灯光下更显金碧辉煌，非常上镜。"
+                           },
+                           {
+                                id: 'huiminjie',
+                                title: "回民街：寻味千年古都的\"逛吃\"天堂",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142558-WjZWdzna.mp3?Expires=86401750573558&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=9PuZ30LQ3gZGzi01lxQZAhoHyhA%3D",
+                                description: "回民街并非一条单一的街道，而是由多条街道组成的美食文化区。这里是西安小吃的\"活字典\"，青石铺路，古建筑林立，空气中永远弥漫着诱人的香气。",
+                                highlights: [
+                                    "地道小吃：肉夹馍、羊肉泡馍、凉皮、灌汤包、biangbiang面……这里是美食爱好者的天堂，可以满足你对西安美食的所有想象。",
+                                    "市井文化：此起彼伏的叫卖声、琳琅满目的手工艺品、穿梭不息的人流，构成了最生动的市井画卷。",
+                                    "历史建筑：街区内还隐藏着高家大院等保存完好的明清民居，可以一窥当年的大户人家的生活场景。"
+                                ],
+                                advice: "人流量极大，尤其是在节假日。建议可以探索一些主街旁边的小巷，往往能发现更地道、性价比更高的美味。"
+                           },
+                           {
+                                id: 'yongxingfang',
+                                title: "永兴坊",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142605-flKsTKqY.mp3?Expires=86401750573565&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=HlkWTDrlpvy8tk1YFPi9ryPK1DU%3D",
+                                description: "（抱歉，在本次信息收集中，多次尝试均未能获取到\"永兴坊\"的详尽介绍。但据了解，这里同样是一个汇集了陕西各地特色美食和非物质文化遗产的街区，以其独特的\"摔碗酒\"而闻名，是体验关中民俗风情的好去处。）",
+                                highlights: ["摔碗酒", "陕西民俗风情", "非物质文化遗产美食"],
+                                advice: "适合体验特色民俗和品尝地方小吃，感受热闹的氛围。"
+                           }
+                        ]
+                    },
+                    {
+                        name: "三、 汉风古韵，湖光山色",
+                        attractions: [
+                            {
+                                id: 'weiyanggong',
+                                title: "汉长安城未央宫国家考古遗址公园：寻访大汉帝国的\"心脏\"",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142614-kcNbJdyO.mp3?Expires=86401750573574&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=XpqiFIyUEAiKPpriO1JRZt7%2FWgs%3D",
+                                description: "作为西汉王朝的都城核心，未央宫曾是当时世界上规模最大的皇宫，存在时间长达千年，见证了十一个王朝的兴衰。如今，这里虽已不见当年的亭台楼阁，但广阔的遗址本身就是一本无言的史书。",
+                                highlights: [
+                                    "前殿遗址：作为未央宫的核心建筑，其巨大的夯土台基依然震撼人心，站在这里，可以想象汉高祖刘邦在此朝会群臣的场景。",
+                                    "沧池遗址：这是中国历史上最早、规模最大的皇家园林之一，如今虽已是平地，但历史的想象空间是无限的。",
+                                    "遗址博物馆：馆内通过模型、图文和出土文物，系统地介绍了汉长安城的历史和考古发现。"
+                                ],
+                                advice: "这里更适合对汉代历史有浓厚兴趣的游客。由于是遗址公园，绿化很好，环境开阔，也适合进行一次历史主题的徒步。"
+                            },
+                            {
+                                id: 'hanchenghu',
+                                title: "汉城湖旅游风景区：依托古城垣的生态画卷",
+                                audioUrl: "https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-mp3-20250622142622-KtfAzxcW.mp3?Expires=86401750573582&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=6j%2Fqe80%2FVTLIvuvERpRkx2qFL%2Bg%3D",
+                                description: "这是一处依托汉代长安城墙东南段遗址，结合水利工程改造而成的国家4A级旅游景区。它将历史遗迹与自然风光巧妙地融为一体。",
+                                highlights: [
+                                    "大风阁：景区内的标志性建筑，取意于汉高祖刘邦的《大风歌》，登阁远眺，汉城湖景色与远处的城市风光尽收眼底。",
+                                    "水上游船：乘坐仿古画舫船，在850亩的湖面上穿行，两岸是仿汉建筑和依依杨柳，别有一番风味。",
+                                    "汉代主题景观：沿湖分布着汉武大帝雕像、天汉雄风浮雕、水车广场等众多与汉文化相关的景观，让您在游山玩水的同时，也能感受到浓厚的汉风古韵。"
+                                ],
+                                advice: "景区免费开放（部分项目收费），是一个适合全家出游、休闲放松的好去处。可以租用自行车或乘坐观光车游览。"
+                            }
+                        ]
+                    }
+                ],
+
+                /**
+                 * 切换手风琴的展开/收起状态
+                 * @param {string} id - 景点的唯一ID
+                 */
+                toggleAccordion(id) {
+                    this.openId = this.openId === id ? null : id;
+                },
+
+                /**
+                 * 播放或暂停指定ID的音频
+                 * @param {string} id - 景点的唯一ID
+                 */
+                playAudio(id) {
+                    // 如果当前有音频正在播放，且不是本次点击的音频，则暂停它
+                    if (this.playingId && this.playingId !== id) {
+                        this.$refs['audio-' + this.playingId].pause();
+                    }
+
+                    const audio = this.$refs['audio-' + id];
+                    
+                    if (this.playingId === id) {
+                        // 如果点击的是正在播放的音频，则暂停
+                        audio.pause();
+                        this.playingId = null;
+                    } else {
+                        // 否则，播放新的音频
+                        audio.currentTime = 0; // 从头开始播放
+                        audio.play();
+                        this.playingId = id;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html> 
